@@ -1,3 +1,4 @@
+# The Unsloth Notebook System Prompt
 SYSTEM_PROMPT = """Respond in the following format:
 <reasoning>
 ...
@@ -7,7 +8,6 @@ SYSTEM_PROMPT = """Respond in the following format:
 </answer>"""
 
 def format_data(example):
-    # Mapping for MathVista or similar datasets
     return {
         "prompt": [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -16,5 +16,7 @@ def format_data(example):
                 {"type": "text", "text": example['question']}
             ]},
         ],
+        # We explicitly keep the 'answer' column.
+        # TRL's GRPOTrainer will pass this list to the reward function.
         "answer": example['answer'] 
     }

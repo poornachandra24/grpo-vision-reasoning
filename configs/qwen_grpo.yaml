@@ -1,29 +1,39 @@
-# Model
+# configs/qwen_grpo.yaml
+
+# --- Identity & Artifacts ---
+run_id: "v1-baseline-mi300x-test1"  # <--- CHANGE THIS per run
+hub_model_id: "Thunderbird2410/grpo-vl-lora"
+
+# --- Model ---
 model_name: "Qwen/Qwen2.5-VL-7B-Instruct"
 output_dir: "outputs/qwen-vl-grpo"
 
-# LoRA
+# --- LoRA ---
 lora_r: 16
 lora_alpha: 16
 lora_dropout: 0.05
 lora_target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
 
-# Training
+# --- Training Lifecycle ---
+max_steps: 100              # <--- Explicit stop condition
+save_steps: 25              # <--- Checkpoint frequency
+logging_steps: 5            # Log to W&B frequently
+save_total_limit: 3         # Only keep the last 3 checkpoints (save disk space)
+
+# --- Hyperparameters ---
 learning_rate: 5.0e-6
 batch_size: 4
 gradient_accumulation_steps: 4
-max_seq_length: 2048
 num_generations: 4
-steps: 250
+max_seq_length: 2048
 
-# vLLM (The Speed Boost)
+# --- vLLM Optimization ---
 use_vllm: true
 vllm_gpu_memory_utilization: 0.5
 vllm_max_model_len: 2048
 
-# System
+# --- System ---
 seed: 42
 dtype: "bfloat16"
 attn_implementation: "flash_attention_2"
-wandb_project: "grpo"
-wandb_run_name: "vllm-run-1"
+wandb_project: "mi300x-qwen-grpo"
