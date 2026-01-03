@@ -130,7 +130,8 @@ For more details, see [docs/inference_guide.md](docs/inference_guide.md).
 
 ## 🧠 Reward Functions
 
-The training is guided by functions defined in `src/rewards.py`:
+The training is guided by functions defined in `src/rewards.py`.
+For a detailed explanation of the reward strategy and scoring logic, see [docs/reward_logic.md](docs/reward_logic.md).
 
 *   **`xmlcount_reward_func`**: Encourages strict usage of `<reasoning>` and `<answer>` tags (must appear exactly once).
 *   **`soft_format_reward_func`**: Checks if the reasoning comes before the answer.

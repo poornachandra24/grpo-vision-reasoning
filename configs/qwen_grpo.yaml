@@ -4,7 +4,7 @@
 # ============================================
 # Identity & Artifacts
 # ============================================
-run_id: "v2-optimized-mi300x-fixed-hf"  # Change this per run
+run_id: "v3-optimized-mi300x-full-testmini-1"  # Change this per run
 hub_model_id: "Thunderbird2410/grpo-vl-lora"
 wandb_project: "mi300x-qwen-grpo"
 output_dir: "outputs/qwen-vl-grpo"
@@ -22,7 +22,7 @@ attn_implementation: "flash_attention_2"
 # LoRA Configuration
 # ============================================
 lora_r: 16
-lora_alpha: 16  # Usually 2x lora_r, but 16 works too
+lora_alpha: 32  # Usually 2x lora_r, but 16 works too
 lora_dropout: 0.05
 lora_target_modules:
   - "q_proj"
@@ -36,9 +36,13 @@ lora_target_modules:
 # ============================================
 # Training Hyperparameters
 # ============================================
-num_train_epochs: 1
-max_steps: 10
+num_train_epochs: 3.0
+max_steps: -1
 learning_rate: 5.0e-6
+lr_scheduler_type: "linear"
+# lr_scheduler_kwargs: null # default
+warmup_ratio: 0.0
+warmup_steps: 0
 
 # Batch Configuration
 batch_size: 8  # Per device batch size

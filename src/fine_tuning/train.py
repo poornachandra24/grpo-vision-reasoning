@@ -95,6 +95,10 @@ def main():
         per_device_train_batch_size=cfg['batch_size'],
         gradient_accumulation_steps=cfg['gradient_accumulation_steps'],
         learning_rate=cfg.get('learning_rate', 5e-7),
+        lr_scheduler_type=cfg.get('lr_scheduler_type', 'linear'),
+        lr_scheduler_kwargs=cfg.get('lr_scheduler_kwargs', None),
+        warmup_ratio=cfg.get('warmup_ratio', 0.0),
+        warmup_steps=cfg.get('warmup_steps', 0),
         
         # Generation Settings
         num_generations=cfg['num_generations'],
