@@ -68,7 +68,11 @@ def main():
         dataset = dataset.select(range(min(cfg['max_samples'], len(dataset))))
     
     logger.info(f"Formatting {len(dataset)} examples...")
-    dataset = prepare_dataset(dataset, processor)
+    dataset = prepare_dataset(
+        dataset, 
+        processor, 
+        num_proc=cfg.get('dataset_num_proc', 1)
+    )
     
     # 3. Configure GRPO Training
     output_dir = f"{cfg['output_dir']}/{run_id}"
@@ -80,7 +84,6 @@ def main():
         run_name=run_id,
         logging_steps=cfg.get('logging_steps', 10),
         save_steps=cfg.get('save_steps', 25),
-        save_total_limit=cfg.get('save_total_limit', 3),
         save_total_limit=cfg.get('save_total_limit', 3),
         report_to="wandb",
         hub_model_id=cfg.get('hub_model_id'),
@@ -166,14 +169,6 @@ def main():
                 commit_info = trainer.push_to_hub(commit_message=commit_message)
                 
                 # 2. Extract commit hash
-                # trainer.push_to_hub returns None usually, but let's try to get it if possible 
-                # or fetch latest commit from repo. 
-                # Actually, let's just use empty string if we can't get it easily from here without API check.
-                # But wait, we can try to get the commit hash if we are in a git repo or if push returns it.
-                # For now, let's just log success.
-                # To really get the hash we might need huggingface_hub API.
-                
-                # Let's try to get the commit hash using huggingface_hub
                 from huggingface_hub import HfApi
                 api = HfApi()
                 # Get latest commit info

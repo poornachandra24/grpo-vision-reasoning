@@ -4,7 +4,7 @@
 # ============================================
 # Identity & Artifacts
 # ============================================
-run_id: "v2-optimized-mi300x"  # Change this per run
+run_id: "v2-optimized-mi300x-fixed-hf"  # Change this per run
 hub_model_id: "Thunderbird2410/grpo-vl-lora"
 wandb_project: "mi300x-qwen-grpo"
 output_dir: "outputs/qwen-vl-grpo"
@@ -58,7 +58,8 @@ top_p: 0.9  # NEW - was missing
 # ============================================
 dataset_name: "AI4Math/MathVista"
 dataset_split: "testmini"
-max_samples: 100  # Use -1 for full dataset
+max_samples: -1  # Use -1 for full dataset
+dataset_num_proc: 16 # Number of processes for data preparation
 
 # ============================================
 # vLLM Configuration (CRITICAL)

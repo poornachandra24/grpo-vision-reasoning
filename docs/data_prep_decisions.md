@@ -30,3 +30,9 @@ This document records the architectural and implementation decisions for the dat
 ## 4. Pipeline Integration
 - **No Pre-templating**: We explicitly **do not** apply `tokenizer.apply_chat_template` during the map phase. 
     - *Rationale*: Applying the template converts the structured list into a single string. `GRPOTrainer` expects the raw list structure for multimodal models to properly insert image tokens and handle the vision encoder inputs. Pre-templating causes `TypeError` during training.
+
+## 5. Performance Optimization
+- **Parallel Processing**: 
+    - We utilize the `num_proc` argument in Hugging Face Datasets `map` and `filter` operations.
+    - Controlled via `dataset_num_proc` in the configuration (default: 16).
+    - *Rationale*: Data preparation involves CPU-bound tasks like image resizing and format conversion. Parallelizing these operations significantly reduces the startup time before training begins, minimizing GPU idle time.

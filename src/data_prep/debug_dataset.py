@@ -19,7 +19,7 @@ dataset = load_dataset("AI4Math/MathVista", split="testmini")
 dataset = dataset.select(range(5))
 
 print("Preparing dataset...")
-processed_dataset = prepare_dataset(dataset, processor)
+processed_dataset = prepare_dataset(dataset, processor, num_proc=2)
 
 print("\nValidation Results:")
 print(f"Original size: {len(dataset)}")

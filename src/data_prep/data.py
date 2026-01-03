@@ -60,7 +60,7 @@ def make_conversation(example):
         "answer": example["answer"]
     }
 
-def prepare_dataset(dataset, tokenizer):
+def prepare_dataset(dataset, tokenizer, num_proc=1):
     """
     Full pipeline to prepare the dataset:
     1. Filter numeric answers
@@ -70,20 +70,18 @@ def prepare_dataset(dataset, tokenizer):
     5. Clean columns
     6. Apply chat template
     """
-    logger.info("Filtering for numeric answers...")
-    dataset = dataset.filter(is_numeric_answer)
+    logger.info(f"Filtering for numeric answers (num_proc={num_proc})...")
+    dataset = dataset.filter(is_numeric_answer, num_proc=num_proc)
     
-    logger.info("Resizing images to 512x512...")
-    dataset = dataset.map(resize_images)
+    logger.info(f"Resizing images to 512x512 (num_proc={num_proc})...")
+    dataset = dataset.map(resize_images, num_proc=num_proc)
     
-    logger.info("Converting images to RGB...")
-    dataset = dataset.map(convert_to_rgb)
+    logger.info(f"Converting images to RGB (num_proc={num_proc})...")
+    dataset = dataset.map(convert_to_rgb, num_proc=num_proc)
     
-    logger.info("Formatting conversations...")
-    dataset = dataset.map(make_conversation)
+    logger.info(f"Formatting conversations (num_proc={num_proc})...")
+    dataset = dataset.map(make_conversation, num_proc=num_proc)
     
-    # Remove original image column and rename decoded_image if needed
-    # (Based on sample code logic, but here make_conversation already returns 'image')
     # Remove original image column and rename decoded_image if needed
     # (Based on sample code logic, but here make_conversation already returns 'image')
     # Use select_columns to keep only what we need to avoid legacy column issues
