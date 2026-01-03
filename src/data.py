@@ -1,143 +1,95 @@
 """
 Dataset Formatting for Qwen2.5-VL GRPO Training
-Formats MathVista and similar vision-math datasets
 """
 
 import logging
+from PIL import Image
+from datasets import Image as ImageFeature
 
 logger = logging.getLogger(__name__)
 
-# System prompt that enforces structured reasoning format
-SYSTEM_PROMPT = """You are a helpful AI assistant that solves mathematical problems step-by-step.
+REASONING_START = "<REASONING>"
+REASONING_END = "</REASONING>"
+SOLUTION_START = "<SOLUTION>"
+SOLUTION_END = "</SOLUTION>"
 
-Always respond in the following XML format:
+def is_numeric_answer(example):
+    try:
+        float(example["answer"])
+        return True
+    except:
+        return False
 
-<reasoning>
-[Explain your step-by-step reasoning here]
-</reasoning>
+def resize_images(example):
+    image = example["decoded_image"]
+    # Resize to (512, 512) as per sample code for consistency/memory
+    image = image.resize((512, 512))
+    example["decoded_image"] = image
+    return example
 
-<answer>
-[Provide the final answer here]
-</answer>
+def convert_to_rgb(example):
+    image = example["decoded_image"]
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+    example["decoded_image"] = image
+    return example
 
-Be clear, concise, and show your work."""
+def make_conversation(example):
+    # The user's text prompt with reasoning instructions
+    text_content = (
+        f"{example['question']}. Also first provide your reasoning or working out"\
+        f" on how you would go about solving the question between {REASONING_START} and {REASONING_END}"
+        f" and then your final answer between {SOLUTION_START} and (put a single float here) {SOLUTION_END}"
+    )
 
-
-def format_data(example):
-    """
-    Format a single example for GRPO training.
-    
-    Expected input fields:
-        - decoded_image: PIL Image or image data
-        - question: str, the math problem
-        - answer: str/int/float, ground truth answer
-        
-    Returns:
-        dict with:
-            - prompt: List of message dicts for Qwen2.5-VL
-            - answer: str, ground truth for reward calculation
-    """
-    
-    # Extract fields
-    image = example.get('decoded_image') or example.get('image')
-    question = example.get('question', '')
-    answer = example.get('answer', '')
-    
-    # Ensure answer is a string for consistent reward calculation
-    if not isinstance(answer, str):
-        answer = str(answer)
-    
-    # Build prompt in Qwen2.5-VL format
+    # Construct the prompt properly for the processor
     prompt = [
-        {
-            "role": "system",
-            "content": [
-                {"type": "text", "text": SYSTEM_PROMPT}
-            ]
-        },
         {
             "role": "user",
             "content": [
-                {"type": "image", "image": image},
-                {"type": "text", "text": question}
-            ]
-        }
-    ]
-    
-    return {
-        "prompt": prompt,
-        "answer": answer
-    }
-
-
-def format_data_text_only(example):
-    """
-    Format a text-only example (for datasets without images).
-    
-    Use this for pure math problems or when testing without vision.
-    """
-    question = example.get('question', '')
-    answer = example.get('answer', '')
-    
-    if not isinstance(answer, str):
-        answer = str(answer)
-    
-    prompt = [
-        {
-            "role": "system",
-            "content": [
-                {"type": "text", "text": SYSTEM_PROMPT}
-            ]
+                {"type": "image"}, 
+                {"type": "text", "text": text_content},
+            ],
         },
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": question}
-            ]
-        }
     ]
     
+    # Return separated fields suitable for map
     return {
-        "prompt": prompt,
-        "answer": answer
+        "prompt": prompt, 
+        "image": example["decoded_image"], 
+        "answer": example["answer"]
     }
 
+def prepare_dataset(dataset, tokenizer):
+    """
+    Full pipeline to prepare the dataset:
+    1. Filter numeric answers
+    2. Resize images
+    3. Convert to RGB
+    4. Create conversation format
+    5. Clean columns
+    6. Apply chat template
+    """
+    logger.info("Filtering for numeric answers...")
+    dataset = dataset.filter(is_numeric_answer)
+    
+    logger.info("Resizing images to 512x512...")
+    dataset = dataset.map(resize_images)
+    
+    logger.info("Converting images to RGB...")
+    dataset = dataset.map(convert_to_rgb)
+    
+    logger.info("Formatting conversations...")
+    dataset = dataset.map(make_conversation)
+    
+    # Remove original image column and rename decoded_image if needed
+    # (Based on sample code logic, but here make_conversation already returns 'image')
+    # Remove original image column and rename decoded_image if needed
+    # (Based on sample code logic, but here make_conversation already returns 'image')
+    # Use select_columns to keep only what we need to avoid legacy column issues
+    dataset = dataset.select_columns(["prompt", "image", "answer"])
 
-def validate_formatted_data(dataset):
-    """
-    Validate that dataset is properly formatted.
+    # Cast image column to Image feature to ensure it decodes to PIL.Image
+    dataset = dataset.cast_column("image", ImageFeature())
     
-    Args:
-        dataset: HuggingFace Dataset after formatting
-        
-    Raises:
-        ValueError if formatting issues detected
-    """
-    if len(dataset) == 0:
-        raise ValueError("Dataset is empty!")
-    
-    sample = dataset[0]
-    
-    # Check required fields
-    if 'prompt' not in sample:
-        raise ValueError("Dataset missing 'prompt' field")
-    if 'answer' not in sample:
-        raise ValueError("Dataset missing 'answer' field")
-    
-    # Check prompt format
-    prompt = sample['prompt']
-    if not isinstance(prompt, list):
-        raise ValueError("Prompt should be a list of messages")
-    
-    if len(prompt) < 2:
-        raise ValueError("Prompt should have at least system + user messages")
-    
-    # Check message format
-    for msg in prompt:
-        if 'role' not in msg or 'content' not in msg:
-            raise ValueError("Each message should have 'role' and 'content'")
-    
-    logger.info("✓ Dataset validation passed")
-    logger.info(f"  Total examples: {len(dataset)}")
-    logger.info(f"  Sample prompt roles: {[m['role'] for m in prompt]}")
-    logger.info(f"  Sample answer type: {type(sample['answer'])}")
+    return dataset

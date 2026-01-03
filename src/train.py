@@ -23,7 +23,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from trl import GRPOTrainer, GRPOConfig
 from datasets import load_dataset
 from src.model import load_model_and_processor
-from src.data import format_data
+from src.data import prepare_dataset
 from src.rewards import (
     xmlcount_reward_func, 
     soft_format_reward_func, 
@@ -68,11 +68,7 @@ def main():
         dataset = dataset.select(range(min(cfg['max_samples'], len(dataset))))
     
     logger.info(f"Formatting {len(dataset)} examples...")
-    dataset = dataset.map(
-        format_data, 
-        remove_columns=dataset.column_names,
-        desc="Formatting dataset"
-    )
+    dataset = prepare_dataset(dataset, processor)
     
     # 3. Configure GRPO Training
     output_dir = f"{cfg['output_dir']}/{run_id}"

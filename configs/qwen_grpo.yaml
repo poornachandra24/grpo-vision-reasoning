@@ -4,7 +4,7 @@
 # ============================================
 # Identity & Artifacts
 # ============================================
-run_id: "v1-baseline-mi300x-test1"  # Change this per run
+run_id: "v1-baseline-mi300x-test2"  # Change this per run
 hub_model_id: "Thunderbird2410/grpo-vl-lora"
 wandb_project: "mi300x-qwen-grpo"
 output_dir: "outputs/qwen-vl-grpo"
