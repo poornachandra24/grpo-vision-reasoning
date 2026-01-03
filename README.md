@@ -10,6 +10,8 @@ This repository implements **Group Relative Policy Optimization (GRPO)** for fin
 *   **AMD MI300X Native**: Built on top of the official `rocm/vllm` stack for maximum performance on CDNA3 architecture.
 *   **GRPO Implementation**: Uses TRL's `GRPOTrainer` to optimize reasoning policies without a value function, saving massive amounts of VRAM.
 *   **vLLM Acceleration**: Integrated `vLLM` backend for rollout generation, providing ~10x speedup over standard Hugging Face generation.
+*   **Inference CLI**: Powerful inference script with support for batching, registry lookup, WandB logging, and local result persistence.
+*   **Parallel Data Prep**: Multi-process data loading to minimize startup time.
 *   **Structured Reasoning**: Includes reward functions specifically designed to enforce `<reasoning>` and `<answer>` XML formats, similar to R1-style chain-of-thought.
 *   **MLOps Ready**: Full integration with **Weights & Biases** for tracking and **Hugging Face Hub** for artifact versioning. Gradient checkpointing enabled by default.
 
@@ -107,6 +109,22 @@ python3 src/train.py
 ### 4. Monitor
 *   **WandB**: Logs will appear under the project `grpo`.
 *   **Checkpoints**: Saved locally to `outputs/qwen-vl-grpo/{run_id}`.
+
+### 5. Inference
+Run inference on your trained models:
+
+```bash
+# Run on a sample image
+python3 src/inference/inference.py \
+    --run_id v1-baseline \
+    --image_path "https://example.com/image.jpg" \
+    --prompt "Solve this."
+
+# Run batch inference on all models
+python3 src/inference/inference.py --run_id all --prompt "Test prompt"
+```
+
+For more details, see [docs/inference_guide.md](docs/inference_guide.md).
 
 ---
 
