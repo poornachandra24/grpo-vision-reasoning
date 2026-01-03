@@ -1,10 +1,23 @@
+# Core ML Libraries
 transformers>=4.49.0
 accelerate>=0.34.0
 datasets>=2.21.0
-trl>=0.14.0
+
+# RL Training - GRPO support added in TRL 0.13.0
+# vLLM 0.11.2 is officially supported by TRL 0.13.0+
+trl>=0.13.0
+
+
+# LoRA & PEFT
 peft>=0.14.0
+
+# Vision-Language Models
 qwen-vl-utils
+
+# Experiment Tracking
 wandb
+
+# Utilities
 typer
 pyyaml
 scipy

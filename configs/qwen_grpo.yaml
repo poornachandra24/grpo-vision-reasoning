@@ -1,39 +1,139 @@
 # configs/qwen_grpo.yaml
+# Optimized for MI300X + vLLM 0.11.2 + TRL 0.13.0+
 
-# --- Identity & Artifacts ---
-run_id: "v1-baseline-mi300x-test1"  # <--- CHANGE THIS per run
+# ============================================
+# Identity & Artifacts
+# ============================================
+run_id: "v1-baseline-mi300x-test1"  # Change this per run
 hub_model_id: "Thunderbird2410/grpo-vl-lora"
-
-# --- Model ---
-model_name: "Qwen/Qwen2.5-VL-7B-Instruct"
+wandb_project: "mi300x-qwen-grpo"
 output_dir: "outputs/qwen-vl-grpo"
 
-# --- LoRA ---
-lora_r: 16
-lora_alpha: 16
-lora_dropout: 0.05
-lora_target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+# Push to HuggingFace Hub after training
+push_to_hub: true  # Set to false if you don't want to push
 
-# --- Training Lifecycle ---
-max_steps: 100              # <--- Explicit stop condition
-save_steps: 25              # <--- Checkpoint frequency
-logging_steps: 5            # Log to W&B frequently
-save_total_limit: 3         # Only keep the last 3 checkpoints (save disk space)
-
-# --- Hyperparameters ---
-learning_rate: 5.0e-6
-batch_size: 4
-gradient_accumulation_steps: 4
-num_generations: 4
-max_seq_length: 2048
-
-# --- vLLM Optimization ---
-use_vllm: true
-vllm_gpu_memory_utilization: 0.5
-vllm_max_model_len: 2048
-
-# --- System ---
-seed: 42
-dtype: "bfloat16"
+# ============================================
+# Model Configuration
+# ============================================
+model_name: "Qwen/Qwen2.5-VL-7B-Instruct"
 attn_implementation: "flash_attention_2"
-wandb_project: "mi300x-qwen-grpo"
+
+# ============================================
+# LoRA Configuration
+# ============================================
+lora_r: 16
+lora_alpha: 16  # Usually 2x lora_r, but 16 works too
+lora_dropout: 0.05
+lora_target_modules:
+  - "q_proj"
+  - "k_proj"
+  - "v_proj"
+  - "o_proj"
+  - "gate_proj"
+  - "up_proj"
+  - "down_proj"
+
+# ============================================
+# Training Hyperparameters
+# ============================================
+num_train_epochs: 1
+max_steps: 100
+learning_rate: 5.0e-6
+
+# Batch Configuration
+batch_size: 4  # Per device batch size
+gradient_accumulation_steps: 4  # Effective batch = 4 * 4 = 16
+
+# Sequence Lengths
+max_seq_length: 2048  # Max prompt length
+max_completion_length: 512  # Max generation length (NEW - was missing!)
+
+# Generation Settings
+num_generations: 4  # Number of rollouts per prompt
+temperature: 1.0  # NEW - was missing
+top_p: 0.9  # NEW - was missing
+
+# ============================================
+# Dataset Configuration (NEW - was missing!)
+# ============================================
+dataset_name: "AI4Math/MathVista"
+dataset_split: "testmini"
+max_samples: 100  # Use -1 for full dataset
+
+# ============================================
+# vLLM Configuration (CRITICAL)
+# ============================================
+use_vllm: true
+
+# Mode: colocate = vLLM on same GPU (memory efficient)
+vllm_mode: "colocate"  # NEW - was missing!
+
+# Memory Management
+vllm_gpu_memory_utilization: 0.5  # 50% for vLLM
+vllm_enable_sleep_mode: true  # NEW - frees memory during training!
+
+# vLLM Generation Settings
+vllm_max_model_len: 2048  # Must match max_seq_length
+
+# Multi-GPU (if using multiple GPUs)
+vllm_tensor_parallel_size: 1  # Set to number of GPUs
+
+# ============================================
+# Optimization
+# ============================================
+gradient_checkpointing: true
+bf16: true  # Use bfloat16
+
+# Optimizer
+# optimizer: "adamw_torch"  # Uncomment if you want to specify
+# weight_decay: 0.01
+# max_grad_norm: 1.0
+
+# ============================================
+# Logging & Checkpointing
+# ============================================
+logging_steps: 5
+save_steps: 25
+save_total_limit: 3
+save_strategy: "steps"
+logging_strategy: "steps"
+report_to: "wandb"
+
+# ============================================
+# System
+# ============================================
+seed: 42
+
+# ============================================
+# Reward Weights (optional - for your reward functions)
+# ============================================
+reward_weights:
+  format: 1.0
+  structure: 0.5
+  strict: 0.3
+  correctness: 2.0
+
+# ============================================
+# Notes for MI300X
+# ============================================
+# 1. batch_size=4 with gradient_accumulation_steps=4 gives effective batch=16
+#    - This is good for learning stability
+#    - Reduce batch_size to 2 or 1 if you get OOM
+#
+# 2. vllm_gpu_memory_utilization=0.5 is conservative
+#    - Can increase to 0.6 if you have memory to spare
+#    - Decrease to 0.4 if you get OOM
+#
+# 3. vllm_enable_sleep_mode=true is CRITICAL
+#    - Frees vLLM memory during training steps
+#    - Without this, you'll likely OOM
+#
+# 4. max_completion_length=512 limits generation
+#    - Prevents runaway generations
+#    - Increase if you need longer reasoning chains
+#
+# 5. If you get OOM errors:
+#    - Reduce batch_size to 2 or 1
+#    - Reduce vllm_gpu_memory_utilization to 0.4
+#    - Reduce num_generations to 2
+#    - Reduce max_seq_length to 1024
