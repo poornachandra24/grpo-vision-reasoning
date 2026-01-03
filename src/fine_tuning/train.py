@@ -18,13 +18,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Add project root to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from trl import GRPOTrainer, GRPOConfig
 from datasets import load_dataset
-from src.model import load_model_and_processor
-from src.data import prepare_dataset
-from src.rewards import (
+from src.fine_tuning.model import load_model_and_processor
+from src.data_prep.data import prepare_dataset
+from src.fine_tuning.rewards import (
     xmlcount_reward_func, 
     soft_format_reward_func, 
     strict_format_reward_func, 
@@ -78,10 +78,13 @@ def main():
         # Output & Logging
         output_dir=output_dir,
         run_name=run_id,
-        logging_steps=cfg.get('logging_steps', 1),
+        logging_steps=cfg.get('logging_steps', 10),
         save_steps=cfg.get('save_steps', 25),
         save_total_limit=cfg.get('save_total_limit', 3),
+        save_total_limit=cfg.get('save_total_limit', 3),
         report_to="wandb",
+        hub_model_id=cfg.get('hub_model_id'),
+        hub_strategy="every_save", # Optional: defines when to push
         
         # Training Hyperparameters
         num_train_epochs=cfg.get('num_train_epochs', 1),
@@ -156,7 +159,41 @@ def main():
         hub_model_id = cfg.get('hub_model_id')
         if hub_model_id:
             logger.info(f"Pushing model to hub: {hub_model_id}")
-            trainer.push_to_hub(hub_model_id)
+            
+            # 1. Push to Hub with Run ID in commit message
+            commit_message = f"Training Run: {run_id}"
+            try:
+                commit_info = trainer.push_to_hub(commit_message=commit_message)
+                
+                # 2. Extract commit hash
+                # trainer.push_to_hub returns None usually, but let's try to get it if possible 
+                # or fetch latest commit from repo. 
+                # Actually, let's just use empty string if we can't get it easily from here without API check.
+                # But wait, we can try to get the commit hash if we are in a git repo or if push returns it.
+                # For now, let's just log success.
+                # To really get the hash we might need huggingface_hub API.
+                
+                # Let's try to get the commit hash using huggingface_hub
+                from huggingface_hub import HfApi
+                api = HfApi()
+                # Get latest commit info
+                model_info = api.model_info(hub_model_id)
+                commit_hash = model_info.sha
+                
+                # 3. Update Model Registry
+                from datetime import datetime
+                timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+                
+                registry_path = "docs/model_registry.md"
+                log_entry = f"| {run_id} | {timestamp} | {commit_hash} | Batch={cfg['batch_size']}, Gens={cfg['num_generations']} |\n"
+                
+                with open(registry_path, "a") as f:
+                    f.write(log_entry)
+                    
+                logger.info(f"Registry updated: {log_entry.strip()}")
+                
+            except Exception as e:
+                logger.error(f"Failed to push to hub or update registry: {e}")
         else:
             logger.warning("push_to_hub=True but hub_model_id not specified")
     

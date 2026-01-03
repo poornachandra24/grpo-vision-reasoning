@@ -1,6 +1,11 @@
+import sys
+import os
+# Add project root to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 from datasets import load_dataset
 from transformers import AutoProcessor
-from src.data import prepare_dataset
+from data import prepare_dataset
 import logging
 
 logging.basicConfig(level=logging.INFO)
