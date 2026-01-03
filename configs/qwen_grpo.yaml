@@ -1,0 +1,29 @@
+# Model
+model_name: "Qwen/Qwen2.5-VL-7B-Instruct"
+output_dir: "outputs/qwen-vl-grpo"
+
+# LoRA
+lora_r: 16
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+
+# Training
+learning_rate: 5.0e-6
+batch_size: 4
+gradient_accumulation_steps: 4
+max_seq_length: 2048
+num_generations: 4
+steps: 250
+
+# vLLM (The Speed Boost)
+use_vllm: true
+vllm_gpu_memory_utilization: 0.5
+vllm_max_model_len: 2048
+
+# System
+seed: 42
+dtype: "bfloat16"
+attn_implementation: "flash_attention_2"
+wandb_project: "grpo"
+wandb_run_name: "vllm-run-1"
