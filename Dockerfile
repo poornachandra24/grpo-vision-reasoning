@@ -4,7 +4,9 @@ FROM vllm-mi300x-base
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     # Ensure we use the vLLM environment created in the base image
-    PATH="/opt/conda/bin:$PATH" 
+    PATH="/opt/conda/bin:$PATH" \
+    # Prevent fragmentation on MI300X
+    PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True"
 
 # 2. Install uv (for speed)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
