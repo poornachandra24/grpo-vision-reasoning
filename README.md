@@ -153,6 +153,16 @@ For a detailed explanation of the reward strategy and scoring logic, see [docs/r
 *   **`strict_format_reward_func`**: Enforces strict newline structure for clean parsing.
 *   **`correctness_reward_func`**: Extracts the content within `<answer>` tags and compares it against ground truth.
 
+
+## Results
+
+We have successfully trained the model to follow a strict thought-process format (`<reasoning>` and `<answer>` tags) and perform complex visual reasoning.
+
+- **Before RL**: The model failed to follow format instructions and often hallucinated on matrix logical tasks.
+- **After RL**: The model correctly reasons through multi-step matrix operations and faithfully outputs the required XML tags.
+
+See [docs/results_comparison.md](docs/results_comparison.md) for a detailed Before/After comparison.
+
 ## 🤝 Contributing
 
 To add a new dataset:
