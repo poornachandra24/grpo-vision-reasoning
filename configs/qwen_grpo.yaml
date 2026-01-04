@@ -4,7 +4,7 @@
 # ============================================
 # Identity & Artifacts
 # ============================================
-run_id: "v3-optimized-mi300x-full-testmini-1"  # Change this per run
+run_id: "Qwenv3-optimized-mi300x-full-testmini-5"  # Change this per run
 hub_model_id: "Thunderbird2410/grpo-vl-lora"
 wandb_project: "mi300x-qwen-grpo"
 output_dir: "outputs/qwen-vl-grpo"
@@ -15,7 +15,8 @@ push_to_hub: true  # Set to false if you don't want to push
 # ============================================
 # Model Configuration
 # ============================================
-model_name: "Qwen/Qwen2.5-VL-7B-Instruct"
+model_name: "Qwen/Qwen3-VL-8B-Instruct"
+#"Qwen/Qwen2.5-VL-7B-Instruct"
 attn_implementation: "flash_attention_2"
 
 # ============================================
@@ -36,7 +37,7 @@ lora_target_modules:
 # ============================================
 # Training Hyperparameters
 # ============================================
-num_train_epochs: 3.0
+num_train_epochs: 1.0
 max_steps: -1
 learning_rate: 5.0e-6
 lr_scheduler_type: "linear"
@@ -50,7 +51,7 @@ gradient_accumulation_steps: 2  # Effective batch = 8 * 2 = 16
 
 # Sequence Lengths
 max_seq_length: 2048  # Max prompt length
-max_completion_length: 512  # Max generation length (NEW - was missing!)
+max_completion_length: 1024  # Max generation length (NEW - was missing!)
 
 # Generation Settings
 num_generations: 8  # Number of rollouts per prompt

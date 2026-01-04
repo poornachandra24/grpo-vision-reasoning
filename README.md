@@ -22,11 +22,22 @@ This repository implements **Group Relative Policy Optimization (GRPO)** for fin
 ```text
 ├── configs/
 │   └── qwen_grpo.yaml       # Experiment configuration (Hyperparams, LoRA, Checkpoints)
+├── docs/                    # Documentation
+│   ├── data_prep_decisions.md
+│   ├── inference_guide.md
+│   ├── model_registry.md
+│   ├── reward_logic.md
+│   └── sample_outputs/
 ├── src/
-│   ├── train.py             # Main entry point: Trainer setup, MLOps, & Execution
-│   ├── model.py             # Model loading with QLoRA/LoRA adapters
-│   ├── data.py              # Dataset formatting (MathVista/VLM datasets)
-│   └── rewards.py           # Custom reward functions (Format, XML count, Correctness)
+│   ├── data_prep/           # Data cleaning and formatting
+│   │   └── data.py
+│   ├── fine_tuning/         # Training logic
+│   │   ├── model.py         # Model loading with QLoRA/LoRA adapters
+│   │   ├── rewards.py       # Custom reward functions
+│   │   └── train.py         # Main entry point: Trainer setup, MLOps, & Execution
+│   └── inference/           # Inference tools
+│       └── inference.py
+├── build_vllm_mi300x.sh     # vLLM Base Image Build Script
 ├── Dockerfile               # Production environment definition (Stage 2)
 └── requirements.txt         # Python dependencies
 ```
@@ -38,31 +49,18 @@ This repository implements **Group Relative Policy Optimization (GRPO)** for fin
 We use a **Two-Stage Build Strategy** to ensure stability with ROCm dependencies.
 
 ### Stage 1: Build Base vLLM Image
-First, we build the official vLLM image from source. This handles the complex compilation of PagedAttention for ROCm.
+First, we build the official vLLM image from source. We provide a script to handle this automatically.
 
 ```bash
-# 1. Clone vLLM to a temporary location
-cd ~/workspace
-git clone https://github.com/vllm-project/vllm.git vllm-official
-cd vllm-official
-
-# 2. Build the Base Image (Takes ~15-20 mins)
-DOCKER_BUILDKIT=1 \
-docker build \
-  -f docker/Dockerfile.rocm \
-  --build-arg ARG_PYTORCH_ROCM_ARCH="gfx942" \
-  --build-arg MAX_JOBS=16 \
-  -t vllm-mi300x-base .
+# 1. Run the build script
+bash build_vllm_mi300x.sh
 ```
 
 ### Stage 2: Build Project Image
 Now, build the lightweight layer containing this project's code and RL libraries.
 
 ```bash
-# 1. Return to this repository
-cd ~/workspace/grpo-vision-reasoning
-
-# 2. Build the Environment (Takes ~10 seconds)
+# 1. Build the Environment (Takes ~10 seconds)
 docker build -t mi300x-grpo-env .
 ```
 
@@ -85,7 +83,7 @@ docker run -it \
     --security-opt seccomp=unconfined \
     --env-file .env \
     -v $(pwd):/workspace \
-    mi300x-grpo-env
+    mi300x-grpo-env:v0.11.2
 ```
 
 ### 2. Configure Your Experiment
@@ -93,17 +91,34 @@ Edit `configs/qwen_grpo.yaml` to define your run.
 
 ```yaml
 run_id: "v1-baseline"           # Unique ID for tracking
-learning_rate: 5.0e-6           # LR for the policy
-max_steps: 100                  # Training duration
-save_steps: 25                  # Checkpoin frequency
-hub_model_id: "your-org/model"  # Hugging Face Repo ID to push to
+output_dir: "outputs/qwen-vl-grpo"
+model_name: "Qwen/Qwen2.5-VL-7B-Instruct"
+
+# Training
+learning_rate: 5.0e-6
+max_steps: 100
+batch_size: 8
+gradient_accumulation_steps: 2
+
+# Generation
+num_generations: 8
+max_completion_length: 512
+
+# Dataset
+dataset_name: "AI4Math/MathVista"
+dataset_split: "testmini"
+
+# vLLM (Critical for Performance)
+use_vllm: true
+vllm_gpu_memory_utilization: 0.7
+vllm_enable_sleep_mode: true    # Important for preventing OOM
 ```
 
 ### 3. Start Training
 Inside the container:
 
 ```bash
-python3 src/train.py
+python3 src/fine_tuning/train.py
 ```
 
 ### 4. Monitor
@@ -130,7 +145,7 @@ For more details, see [docs/inference_guide.md](docs/inference_guide.md).
 
 ## 🧠 Reward Functions
 
-The training is guided by functions defined in `src/rewards.py`.
+The training is guided by functions defined in `src/fine_tuning/rewards.py`.
 For a detailed explanation of the reward strategy and scoring logic, see [docs/reward_logic.md](docs/reward_logic.md).
 
 *   **`xmlcount_reward_func`**: Encourages strict usage of `<reasoning>` and `<answer>` tags (must appear exactly once).
@@ -141,5 +156,5 @@ For a detailed explanation of the reward strategy and scoring logic, see [docs/r
 ## 🤝 Contributing
 
 To add a new dataset:
-1.  Import it in `src/train.py`.
-2.  Update `src/data.py` to map the dataset's columns to the required `prompt`/`answer` format.
+1.  Import it in `src/fine_tuning/train.py`.
+2.  Update `src/data_prep/data.py` to map the dataset's columns to the required `prompt`/`answer` format.

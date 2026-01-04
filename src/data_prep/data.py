@@ -8,10 +8,10 @@ from datasets import Image as ImageFeature
 
 logger = logging.getLogger(__name__)
 
-REASONING_START = "<REASONING>"
-REASONING_END = "</REASONING>"
-SOLUTION_START = "<SOLUTION>"
-SOLUTION_END = "</SOLUTION>"
+REASONING_START = "<reasoning>"
+REASONING_END = "</reasoning>"
+SOLUTION_START = "<answer>"
+SOLUTION_END = "</answer>"
 
 def is_numeric_answer(example):
     try:
@@ -44,6 +44,12 @@ def make_conversation(example):
 
     # Construct the prompt properly for the processor
     prompt = [
+        {
+            "role": "system",
+            "content": [
+                {"type": "text", "text": f"You are a helpful assistant. You must first provide your reasoning in {REASONING_START} tags, and then your numeric answer in {SOLUTION_START} tags."}
+            ],
+        },
         {
             "role": "user",
             "content": [
@@ -80,7 +86,7 @@ def prepare_dataset(dataset, tokenizer, num_proc=1):
     dataset = dataset.map(convert_to_rgb, num_proc=num_proc)
     
     logger.info(f"Formatting conversations (num_proc={num_proc})...")
-    dataset = dataset.map(make_conversation, num_proc=num_proc)
+    dataset = dataset.map(make_conversation, num_proc=num_proc, load_from_cache_file=False)
     
     # Remove original image column and rename decoded_image if needed
     # (Based on sample code logic, but here make_conversation already returns 'image')
