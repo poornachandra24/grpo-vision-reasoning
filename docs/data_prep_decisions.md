@@ -1,4 +1,4 @@
-# Data Preparation Decisions for Qwen2.5-VL GRPO
+# Data Preparation Decisions for Qwen-VL GRPO
 
 This document records the architectural and implementation decisions for the data processing pipeline used in GRPO training.
 
@@ -25,7 +25,7 @@ This document records the architectural and implementation decisions for the dat
       ]
       ```
     - This structure is required by `GRPOTrainer` to correctly handle multimodal inputs.
-- **Reasoning Enforcement**: The user prompt is augmented with instructions to enclose reasoning in `<REASONING>...</REASONING>` tags and the final answer in `<SOLUTION>...</SOLUTION>` tags. This facilitates the parsing logic required by the GRPO reward functions.
+- **Reasoning Enforcement**: The system prompt is augmented with instructions to enclose reasoning in `<reasoning>...</reasoning>` tags and the final answer in `<answer>...</answer>` tags. This facilitates the parsing logic required by the GRPO reward functions.
 
 ## 4. Pipeline Integration
 - **No Pre-templating**: We explicitly **do not** apply `tokenizer.apply_chat_template` during the map phase. 
