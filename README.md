@@ -163,8 +163,16 @@ We have successfully trained the model to follow a strict thought-process format
 
 See [docs/results_comparison.md](docs/results_comparison.md) for a detailed Before/After comparison.
 
-## 🤝 Contributing
 
-To add a new dataset:
-1.  Import it in `src/fine_tuning/train.py`.
-2.  Update `src/data_prep/data.py` to map the dataset's columns to the required `prompt`/`answer` format.
+
+## References:
+1. https://huggingface.co/docs/trl/main/en/grpo_trainer
+2. https://unsloth.ai/docs/get-started/reinforcement-learning-rl-guide
+3. https://huggingface.co/docs/trl/main/en/vllm_integration
+4. https://docs.vllm.ai/en/stable/training/trl/
+
+   
+
+
+
+
