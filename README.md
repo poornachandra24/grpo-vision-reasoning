@@ -1,9 +1,9 @@
-# 🦅 VLM-RL on MI300X: GRPO with Qwen2.5-VL
+# GRPO with Qwen-VL
 
 > **High-Performance Reinforcement Learning Pipeline for Vision-Language Models**  
 > Optimized for AMD MI300X Accelerators | Powered by vLLM & TRL
 
-This repository implements **Group Relative Policy Optimization (GRPO)** for fine-tuning **Qwen2.5-VL** using reinforcement learning. It is specifically engineered for the **AMD ROCm** ecosystem, leveraging `vLLM` for accelerated rollout generation and LoRA for memory-efficient training.
+This repository implements **Group Relative Policy Optimization (GRPO)** for fine-tuning **Qwen-VL(2.5 and 3 series)** using reinforcement learning. It is specifically engineered for the **AMD ROCm** ecosystem, leveraging `vLLM` for accelerated rollout generation and LoRA for memory-efficient training.
 
 ## ⚡ Key Features
 
