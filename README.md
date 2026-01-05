@@ -1,9 +1,20 @@
-# GRPO with Qwen-VL
+# GRPO-Optimized Vision Reasoning 
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Model%20Weights-yellow)](https://huggingface.co/Thunderbird2410/grpo-vl-lora) ![AMD MI300X](https://img.shields.io/badge/Hardware-AMD_MI300X-red) ![Framework](https://img.shields.io/badge/Framework-vLLM_%2B_TRL-blue)
 
 > **High-Performance Reinforcement Learning Pipeline for Vision-Language Models**  
 > Optimized for AMD MI300X Accelerators | Powered by vLLM & TRL
 
 This repository implements **Group Relative Policy Optimization (GRPO)** for fine-tuning **Qwen-VL(2.5 and 3 series)** using reinforcement learning. It is specifically engineered for the **AMD ROCm** ecosystem, leveraging `vLLM` for accelerated rollout generation and LoRA for memory-efficient training.
+
+It serves as a **technical case study** illustrating the relationship between "Reasoning Bloat" and **Arithmetic Intensity**. By comparing a baseline model against a GRPO-optimized policy, we **display the physical impact** of verbose reasoning chains on Memory Subsystem Saturation and Power Consumption.
+
+## 📥 Model Access
+
+The RL-finetuned LoRA adapters used in this analysis are hosted on the Hugging Face Hub:
+
+| Model | Base Architecture | Description | Link |
+| :--- | :--- | :--- | :--- |
+| **`grpo-vl-lora`** | Qwen3-VL-8B-Instruct | Optimized policy used to demonstrate the shift from Memory-Bound to Compute-Bound inference. | [**Hugging Face**](https://huggingface.co/Thunderbird2410/grpo-vl-lora) |
 
 ## ⚡ Key Features
 
@@ -13,7 +24,8 @@ This repository implements **Group Relative Policy Optimization (GRPO)** for fin
 *   **Inference CLI**: Powerful inference script with support for batching, registry lookup, WandB logging, and local result persistence.
 *   **Parallel Data Prep**: Multi-process data loading to minimize startup time.
 *   **Structured Reasoning**: Includes reward functions specifically designed to enforce `<reasoning>` and `<answer>` XML formats, similar to R1-style chain-of-thought.
-*   **MLOps Ready**: Full integration with **Weights & Biases** for tracking and **Hugging Face Hub** for artifact versioning. Gradient checkpointing enabled by default.
+*   **MLOps Ready**: Full integration with **Weights & Biases** for trackingto visualize the shift in reward distribution and generation length.
+ and **Hugging Face Hub** for artifact versioning. Gradient checkpointing enabled by default.
 
 ---
 
@@ -129,11 +141,13 @@ python3 src/fine_tuning/train.py
 Run inference on your trained models:
 
 ```bash
-# Run on a sample image
+# Run on a sample image using the Hugging Face adapter
 python3 src/inference/inference.py \
-    --run_id v1-baseline \
-    --image_path "https://example.com/image.jpg" \
-    --prompt "Solve this."
+    --base_model "Qwen/Qwen3-VL-8B-Instruct" \
+    --adapter_model "Thunderbird2410/grpo-vl-lora" \
+    --run_id Qwenv3-optimized-mi300x-full-testmini-5 \
+    --image_path "https://example.com/matrix_problem.jpg" \
+    --prompt "Compute the logprobs * advantages."
 
 # Run batch inference on all models
 python3 src/inference/inference.py --run_id all --prompt "Test prompt"
@@ -161,7 +175,7 @@ We have successfully trained the model to follow a strict thought-process format
 - **Before RL**: The model failed to follow format instructions and often hallucinated on matrix logical tasks.
 - **After RL**: The model correctly reasons through multi-step matrix operations and faithfully outputs the required XML tags.
 
-See [docs/results_comparison.md](docs/results_comparison.md) for a detailed Before/After comparison.
+See [docs/results_comparison.md](docs/results_comparison.md) for a detailed Before/After comparison with inference metrics
 
 
 
