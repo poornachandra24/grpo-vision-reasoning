@@ -1,4 +1,4 @@
-# Qwen2.5-VL GRPO Inference Guide
+# Qwen-VL GRPO Inference Guide
 
 The project includes a robust inference CLI located at `src/inference/inference.py`.
 
@@ -12,6 +12,7 @@ The project includes a robust inference CLI located at `src/inference/inference.
 ## Usage
 
 ### Basic Usage
+ > Note: Ensure the base model and the lora adapter hf commit are compatible
 ```bash
 python3 src/inference/inference.py \
     --run_id v2-optimized-mi300x \
@@ -52,6 +53,7 @@ python3 src/inference/inference.py \
 
 | Argument | Description | Default |
 | :--- | :--- | :--- |
+| `--base_model`| base model to pull from HF| Qwen/Qwen2.5-VL-7B-Instruct|
 | `--run_id` | Run ID(s) to load. Comma-separated or 'all'. | Latest from Registry |
 | `--image_path` | Path/URL to image(s). Comma-separated or directory. | None |
 | `--prompt` | User prompt text. | "Solve this math problem..." |
